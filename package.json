@@ -1,6 +1,6 @@
 {
   "name": "@dour/sequelize-adapter",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Dour Sequelize Adapter",
   "main": "index.js",
   "types": "index.d.ts",
