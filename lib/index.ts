@@ -1,7 +1,7 @@
-import Sequalize from 'sequelize';
+import Sequelize from 'sequelize';
 import lazyTruth from 'dour/utils/lazy-truth'
 import { modeler } from 'dour'
-import { DataSourceAdapter, DataSource, DataSourceModel } from 'dour/types'
+import { DataSourceAdapter } from 'dour/types'
 
 export interface SequalizeConfiguration {
     database: string,
@@ -12,20 +12,25 @@ export interface SequalizeConfiguration {
     port: number,
 }
 
-const covertType = (type: number) => lazyTruth({
-    [modeler.Date]: Sequalize.DATE,
-    [modeler.Number]: Sequalize.INTEGER,
-    [modeler.String]: Sequalize.STRING,
+const convertType = (type: number) => lazyTruth({
+    [modeler.Date]: Sequelize.DATE,
+    [modeler.Number]: Sequelize.INTEGER,
+    [modeler.String]: Sequelize.STRING,
 }, (current: string) => current === type.toString())
 
 export const translateModel = (model: any) =>
     Object.keys(model).reduce((a: any, c) => ({
         ...a,
-        [c]: covertType(model[c])
+        [c]: c !== 'id' ? convertType(model[c]) : {
+            primaryKey: true,
+            type: convertType(model[c])
+        }
     }), {})
 
 export default (config: SequalizeConfiguration): DataSourceAdapter => {
-    const seq = new Sequalize(
+    const sequelizeInstance: any = Sequelize
+
+    const seq = new sequelizeInstance(
         config.database,
         config.username,
         config.password, {
@@ -34,7 +39,9 @@ export default (config: SequalizeConfiguration): DataSourceAdapter => {
         dialect: config.dialect,
     })
 
-    seq.sync().catch((err: string) => console.error(`Error: Sequalize: ${err}`))
+    seq.sync().catch((err: string) => {
+        throw err
+    })
 
     return {
         dataSource: seq,
